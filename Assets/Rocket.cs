@@ -7,6 +7,8 @@ public class Rocket : MonoBehaviour
 {
     Rigidbody rigidBody;
     AudioSource audioController;
+    [SerializeField] float thrustPower = 25;
+    [SerializeField] float rotateSpeed = 175f;
 
     // Start is called before the first frame update
     void Start()
@@ -18,27 +20,35 @@ public class Rocket : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        ProcessInput();
+        PlayerThrust();
+        PlayerRotate();
     }
 
-    private void ProcessInput()
+    private void OnCollisionEnter(Collision collision)
     {
-        Thrust();
-        if (Input.GetKey(KeyCode.A))
+        switch (collision.gameObject.tag)
         {
-            transform.Rotate(Vector3.forward);
-        }
-        else if (Input.GetKey(KeyCode.D))
-        {
-            transform.Rotate(Vector3.back);
+            case "Friendly":
+                print("Ok");
+                break;
+
+            case "Goal":
+                print("Winner");
+                break;
+
+            default:
+                print("Dead");
+                break;
         }
     }
 
-    private void Thrust()
+    private void PlayerThrust()
     {
         if (Input.GetKey(KeyCode.Space))
         {
-            rigidBody.AddRelativeForce(Vector3.up);
+            float frameThrustPower = thrustPower;
+
+            rigidBody.AddRelativeForce(Vector3.up * frameThrustPower);
             if (!audioController.isPlaying)
             {
                 audioController.Play();
@@ -49,4 +59,23 @@ public class Rocket : MonoBehaviour
             audioController.Stop();
         }
     }
+
+    private void PlayerRotate()
+    {
+        //stop natural phystics control and take control of rotation
+        rigidBody.freezeRotation = true;
+        float frameRotateSpeed = rotateSpeed * Time.deltaTime;
+
+        if (Input.GetKey(KeyCode.A))
+        {
+            transform.Rotate(Vector3.forward * frameRotateSpeed);
+        }
+        else if (Input.GetKey(KeyCode.D))
+        {
+            transform.Rotate(Vector3.back * frameRotateSpeed);
+        }
+        rigidBody.freezeRotation = false; //resume natural phystics control
+
+    }
+
 }
