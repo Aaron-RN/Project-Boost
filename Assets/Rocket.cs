@@ -1,14 +1,21 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class Rocket : MonoBehaviour
 {
-    Rigidbody rigidBody;
-    AudioSource audioController;
     [SerializeField] float thrustPower = 25;
     [SerializeField] float rotateSpeed = 175f;
+    [SerializeField] AudioClip sfxThrust;
+    [SerializeField] AudioClip sfxDeath;
+    [SerializeField] AudioClip sfxWin;
+    static int sceneLevel = 0; //Level 1
+    static int sceneMaxlevel = 1;
+
+    enum State { Alive, Dying, Transcending};
+    State playerState = State.Alive;
+
+    Rigidbody rigidBody;
+    AudioSource audioController;
 
     // Start is called before the first frame update
     void Start()
@@ -20,24 +27,52 @@ public class Rocket : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        PlayerThrust();
-        PlayerRotate();
+        if (playerState == State.Alive)
+        {
+            PlayerThrust();
+            PlayerRotate();
+        }
     }
 
+    private void ReloadScene()
+    {
+        SceneManager.LoadScene(sceneLevel);
+    }
+    private void NextScene()
+    {
+        if (sceneLevel < sceneMaxlevel) { sceneLevel++; };
+        SceneManager.LoadScene(sceneLevel);
+    }
+
+    private void Death()
+    {
+        playerState = State.Dying;
+        audioController.Stop();
+        audioController.PlayOneShot(sfxDeath);
+        Invoke("ReloadScene", 3f);
+    }
+    private void Won()
+    {
+        playerState = State.Transcending;
+        audioController.Stop();
+        audioController.PlayOneShot(sfxWin);
+        Invoke("NextScene", 3f);
+    }
     private void OnCollisionEnter(Collision collision)
     {
+        if (playerState != State.Alive) { return; } //ignore collisions when dead
+
         switch (collision.gameObject.tag)
         {
             case "Friendly":
-                print("Ok");
                 break;
 
             case "Goal":
-                print("Winner");
+                Won();
                 break;
 
             default:
-                print("Dead");
+                Death();
                 break;
         }
     }
@@ -46,17 +81,22 @@ public class Rocket : MonoBehaviour
     {
         if (Input.GetKey(KeyCode.Space))
         {
-            float frameThrustPower = thrustPower;
-
-            rigidBody.AddRelativeForce(Vector3.up * frameThrustPower);
-            if (!audioController.isPlaying)
-            {
-                audioController.Play();
-            }
+            Thrust();
         }
         else
         {
             audioController.Stop();
+        }
+    }
+
+    private void Thrust()
+    {
+        float frameThrustPower = thrustPower;
+
+        rigidBody.AddRelativeForce(Vector3.up * frameThrustPower);
+        if (!audioController.isPlaying)
+        {
+            audioController.PlayOneShot(sfxThrust);
         }
     }
 
