@@ -210,7 +210,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 100500094, guid: 36d3b0c4b7baa3b4c900569b3b10ca4a, type: 3}
       propertyPath: thrustPower
-      value: 25
+      value: 950
       objectReference: {fileID: 0}
     - target: {fileID: 100500094, guid: 36d3b0c4b7baa3b4c900569b3b10ca4a, type: 3}
       propertyPath: rotateSpeed

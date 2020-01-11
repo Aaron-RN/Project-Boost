@@ -3,13 +3,18 @@ using UnityEngine.SceneManagement;
 
 public class Rocket : MonoBehaviour
 {
-    [SerializeField] float thrustPower = 25;
+    [SerializeField] float thrustPower = 950;
     [SerializeField] float rotateSpeed = 175f;
     [SerializeField] AudioClip sfxThrust;
     [SerializeField] AudioClip sfxDeath;
     [SerializeField] AudioClip sfxWin;
+
+    [SerializeField] ParticleSystem fxThrust;
+    [SerializeField] ParticleSystem fxDeath;
+    [SerializeField] ParticleSystem fxWin;
     static int sceneLevel = 0; //Level 1
     static int sceneMaxlevel = 1;
+    float levelLoadDelay = 3f;
 
     enum State { Alive, Dying, Transcending};
     State playerState = State.Alive;
@@ -36,10 +41,12 @@ public class Rocket : MonoBehaviour
 
     private void ReloadScene()
     {
+        fxDeath.Stop();
         SceneManager.LoadScene(sceneLevel);
     }
     private void NextScene()
     {
+        fxWin.Stop();
         if (sceneLevel < sceneMaxlevel) { sceneLevel++; };
         SceneManager.LoadScene(sceneLevel);
     }
@@ -49,14 +56,16 @@ public class Rocket : MonoBehaviour
         playerState = State.Dying;
         audioController.Stop();
         audioController.PlayOneShot(sfxDeath);
-        Invoke("ReloadScene", 3f);
+        fxDeath.Play();
+        Invoke("ReloadScene", levelLoadDelay);
     }
     private void Won()
     {
         playerState = State.Transcending;
         audioController.Stop();
         audioController.PlayOneShot(sfxWin);
-        Invoke("NextScene", 3f);
+        fxWin.Play();
+        Invoke("NextScene", levelLoadDelay);
     }
     private void OnCollisionEnter(Collision collision)
     {
@@ -72,6 +81,7 @@ public class Rocket : MonoBehaviour
                 break;
 
             default:
+                fxThrust.Stop();
                 Death();
                 break;
         }
@@ -82,16 +92,18 @@ public class Rocket : MonoBehaviour
         if (Input.GetKey(KeyCode.Space))
         {
             Thrust();
+            fxThrust.Play();
         }
         else
         {
             audioController.Stop();
+            fxThrust.Stop();
         }
     }
 
     private void Thrust()
     {
-        float frameThrustPower = thrustPower;
+        float frameThrustPower = thrustPower * Time.deltaTime;
 
         rigidBody.AddRelativeForce(Vector3.up * frameThrustPower);
         if (!audioController.isPlaying)
