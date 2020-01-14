@@ -3,6 +3,7 @@ using UnityEngine.SceneManagement;
 
 public class Rocket : MonoBehaviour
 {
+    [SerializeField] bool debugMode = false;
     [SerializeField] float thrustPower = 950;
     [SerializeField] float rotateSpeed = 175f;
     [SerializeField] AudioClip sfxThrust;
@@ -13,7 +14,7 @@ public class Rocket : MonoBehaviour
     [SerializeField] ParticleSystem fxDeath;
     [SerializeField] ParticleSystem fxWin;
     static int sceneLevel = 0; //Level 1
-    static int sceneMaxlevel = 1;
+    static int sceneMaxlevel;
     float levelLoadDelay = 3f;
 
     enum State { Alive, Dying, Transcending};
@@ -25,6 +26,8 @@ public class Rocket : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        sceneMaxlevel = SceneManager.sceneCountInBuildSettings - 1;
+
         rigidBody = GetComponent<Rigidbody>();
         audioController = GetComponent<AudioSource>();
     }
@@ -37,6 +40,11 @@ public class Rocket : MonoBehaviour
             PlayerThrust();
             PlayerRotate();
         }
+
+        if (debugMode)
+        {
+            if (Input.GetKey(KeyCode.L)){ Won(); }
+        }
     }
 
     private void ReloadScene()
@@ -47,7 +55,8 @@ public class Rocket : MonoBehaviour
     private void NextScene()
     {
         fxWin.Stop();
-        if (sceneLevel < sceneMaxlevel) { sceneLevel++; };
+        if (sceneLevel < sceneMaxlevel) { sceneLevel++; }
+        else { sceneLevel = 0; }
         SceneManager.LoadScene(sceneLevel);
     }
 
@@ -61,6 +70,7 @@ public class Rocket : MonoBehaviour
     }
     private void Won()
     {
+        if (playerState == State.Transcending) { return; }
         playerState = State.Transcending;
         audioController.Stop();
         audioController.PlayOneShot(sfxWin);
@@ -69,7 +79,7 @@ public class Rocket : MonoBehaviour
     }
     private void OnCollisionEnter(Collision collision)
     {
-        if (playerState != State.Alive) { return; } //ignore collisions when dead
+        if (playerState != State.Alive || debugMode) { return; } //ignore collisions when dead
 
         switch (collision.gameObject.tag)
         {
@@ -114,20 +124,22 @@ public class Rocket : MonoBehaviour
 
     private void PlayerRotate()
     {
-        //stop natural phystics control and take control of rotation
-        rigidBody.freezeRotation = true;
-        float frameRotateSpeed = rotateSpeed * Time.deltaTime;
-
         if (Input.GetKey(KeyCode.A))
         {
-            transform.Rotate(Vector3.forward * frameRotateSpeed);
+            RotateDirection(rotateSpeed * Time.deltaTime);
         }
         else if (Input.GetKey(KeyCode.D))
         {
-            transform.Rotate(Vector3.back * frameRotateSpeed);
+            RotateDirection(-rotateSpeed * Time.deltaTime);
         }
-        rigidBody.freezeRotation = false; //resume natural phystics control
-
     }
 
+    private void RotateDirection(float frameRotateSpeed)
+    {
+        //stop natural phystics control and take control of rotation
+        rigidBody.freezeRotation = true;
+        transform.Rotate(Vector3.forward * frameRotateSpeed);
+        //resume natural phystics control
+        rigidBody.freezeRotation = false;
+    }
 }

@@ -14792,6 +14792,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 54419b8c7329ec4438bfdf64d4db98e3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  debugMode: 0
   thrustPower: 950
   rotateSpeed: 175
   sfxThrust: {fileID: 8300000, guid: ee9d972099e57344089c4e6073917265, type: 3}
