@@ -5,8 +5,8 @@ using UnityEngine.SceneManagement;
 
 public class Rocket_Android : MonoBehaviour
 {
-    [SerializeField] bool debugMode = false;
-    [SerializeField] float thrustPower = 950;
+    [SerializeField] readonly bool debugMode = false;
+    [SerializeField] float thrustPower = 950f;
     [SerializeField] float rotateSpeed = 175f;
     [SerializeField] AudioClip sfxThrust;
     [SerializeField] AudioClip sfxDeath;
@@ -17,14 +17,17 @@ public class Rocket_Android : MonoBehaviour
     [SerializeField] ParticleSystem fxWin;
     static int sceneLevel = 0; //Level 1
     static int sceneMaxlevel;
-    float levelLoadDelay = 3f;
+    private float levelLoadDelay = 3f;
 
     enum State { Alive, Dying, Transcending };
     State playerState = State.Alive;
 
+    Vector3 cameraOffset;
+
     [SerializeField] Joystick joystick;
     BtnThrust btnThrust;
     Rigidbody rigidBody;
+    AudioSource audioThrustController;
     AudioSource audioController;
 
     // Start is called before the first frame update
@@ -33,8 +36,12 @@ public class Rocket_Android : MonoBehaviour
         sceneMaxlevel = SceneManager.sceneCountInBuildSettings - 1;
 
         rigidBody = GetComponent<Rigidbody>();
-        audioController = GetComponent<AudioSource>();
+        audioController = GetComponents<AudioSource>()[0];
+        audioThrustController = GetComponents<AudioSource>()[1];
+
         btnThrust = GameObject.Find("BtnThrust").GetComponent<BtnThrust>();
+
+        cameraOffset = Camera.main.transform.position;
     }
 
     // Update is called once per frame
@@ -44,6 +51,8 @@ public class Rocket_Android : MonoBehaviour
         Screen.autorotateToPortraitUpsideDown = false;
         Screen.autorotateToLandscapeRight = false;
         Screen.orientation = ScreenOrientation.LandscapeLeft;
+
+        Camera.main.transform.position = transform.position + cameraOffset;
 
         if (playerState == State.Alive)
         {
@@ -73,7 +82,7 @@ public class Rocket_Android : MonoBehaviour
     private void Death()
     {
         playerState = State.Dying;
-        audioController.Stop();
+        audioThrustController.volume = 0;
         audioController.PlayOneShot(sfxDeath);
         Handheld.Vibrate();
         fxDeath.Play();
@@ -83,7 +92,7 @@ public class Rocket_Android : MonoBehaviour
     {
         if (playerState == State.Transcending) { return; }
         playerState = State.Transcending;
-        audioController.Stop();
+        audioThrustController.volume = 0;
         audioController.PlayOneShot(sfxWin);
         fxWin.Play();
         Invoke("NextScene", levelLoadDelay);
@@ -117,7 +126,7 @@ public class Rocket_Android : MonoBehaviour
         }
         else
         {
-            audioController.Stop();
+            if (audioThrustController.volume != 0) { audioThrustController.volume = 0; }
             fxThrust.Stop();
         }
     }
@@ -127,21 +136,20 @@ public class Rocket_Android : MonoBehaviour
         float frameThrustPower = thrustPower * Time.deltaTime;
 
         rigidBody.AddRelativeForce(Vector3.up * frameThrustPower);
-        if (!audioController.isPlaying)
-        {
-            audioController.PlayOneShot(sfxThrust);
-        }
+
+        if (audioThrustController.volume != 1) { audioThrustController.volume = 1; }
+        if (!audioThrustController.isPlaying){audioThrustController.Play();}
     }
 
     private void PlayerRotate()
     {
-        if (joystick.Horizontal < 0)
+        if (joystick.Horizontal < 0f)
         {
-            RotateDirection(rotateSpeed * Time.deltaTime);
+            RotateDirection(rotateSpeed * -joystick.Horizontal * Time.deltaTime);
         }
-        else if (joystick.Horizontal > 0)
+        else if (joystick.Horizontal > 0f)
         {
-            RotateDirection(-rotateSpeed * Time.deltaTime);
+            RotateDirection(-rotateSpeed * joystick.Horizontal * Time.deltaTime);
         }
     }
 

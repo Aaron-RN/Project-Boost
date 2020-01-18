@@ -63,8 +63,12 @@ public class Rocket : MonoBehaviour
     private void Death()
     {
         playerState = State.Dying;
-        audioController.Stop();
-        audioController.PlayOneShot(sfxDeath);
+        fxThrust.Stop();
+        if (audioController)
+        {
+            audioController.Stop();
+            audioController.PlayOneShot(sfxDeath);
+        }
         fxDeath.Play();
         Invoke("ReloadScene", levelLoadDelay);
     }
@@ -72,8 +76,11 @@ public class Rocket : MonoBehaviour
     {
         if (playerState == State.Transcending) { return; }
         playerState = State.Transcending;
-        audioController.Stop();
-        audioController.PlayOneShot(sfxWin);
+        if (audioController)
+        {
+            audioController.Stop();
+            audioController.PlayOneShot(sfxWin);
+        }
         fxWin.Play();
         Invoke("NextScene", levelLoadDelay);
     }
@@ -91,7 +98,6 @@ public class Rocket : MonoBehaviour
                 break;
 
             default:
-                fxThrust.Stop();
                 Death();
                 break;
         }
